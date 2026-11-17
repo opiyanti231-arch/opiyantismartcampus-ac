@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Monitoring AC Kampus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-snowflake text-2xl text-sky-400"></i>
+                    <div>
+                        <span class="font-bold text-lg tracking-wide">SmartCampus HVAC</span>
+                        <span class="block text-xs text-blue-200">Sistem Monitoring & Kontrol AC</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 text-sm">
+                    <span id="clock" class="bg-blue-800 px-3 py-1 rounded-md font-mono text-sky-200"></span>
+                    <button onclick="matikanSemuaAC()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-power-off"></i> Matikan Semua
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Total Unit AC</p>
+                    <p id="total-unit" class="text-3xl font-bold text-slate-800 mt-1">0</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">AC Menyala (ON)</p>
+                    <p id="total-on" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-fan fa-spin"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">AC Mati (OFF)</p>
+                    <p id="total-off" class="text-3xl font-bold text-slate-600 mt-1">0</p>
+                </div>
+                <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-power-off"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Perlu Perawatan / Alert</p>
+                    <p id="total-alert" class="text-3xl font-bold text-amber-600 mt-1">0</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="filterGedung('ALL')" class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white">Semua Gedung</button>
+                <button onclick="filterGedung('Gedung A')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">Gedung A (Rektorat)</button>
+                <button onclick="filterGedung('Gedung B')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">Gedung B (Teknik)</button>
+                <button onclick="filterGedung('Gedung C')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">Gedung C (Lab)</button>
+            </div>
+            <div class="relative w-full sm:w-64">
+                <input type="text" id="search-input" onkeyup="renderCards()" placeholder="Cari ruangan..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                <i class="fa-solid fa-search absolute left-3.5 top-2.5 text-slate-400"></i>
+            </div>
+        </div>
+
+        <!-- Grid Kartu Ruangan AC -->
+        <div id="ac-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Kartu akan di-generate oleh JavaScript -->
+        </div>
+
+    </main>
+
+    <script>
+        // Data Simulasi AC Kampus
+        let dataAC = [
+            { id: 1, gedung: "Gedung A", ruangan: "A.101 - Ruang Rapat Utama", status: true, suhuSet: 20, suhuRuang: 21, daya: "1200W", alert: false, catatan: "Normal" },
+            { id: 2, gedung: "Gedung A", ruangan: "A.102 - Administrasi Akademik", status: true, suhuSet: 22, suhuRuang: 22, daya: "950W", alert: false, catatan: "Normal" },
+            { id: 3, gedung: "Gedung B", ruangan: "B.201 - Ruang Kuliah 1", status: false, suhuSet: 24, suhuRuang: 29, daya: "0W", alert: false, catatan: "Standby" },
+            { id: 4, gedung: "Gedung B", ruangan: "B.202 - Ruang Kuliah 2", status: true, suhuSet: 18, suhuRuang: 26, daya: "1450W", alert: true, catatan: "Suhu tidak turun (Cek Freon)" },
+            { id: 5, gedung: "Gedung C", ruangan: "C.301 - Lab Komputer 1", status: true, suhuSet: 19, suhuRuang: 19, daya: "1800W", alert: false, catatan: "Normal (2 Unit)" },
+            { id: 6, gedung: "Gedung C", ruangan: "C.302 - Ruang Server", status: true, suhuSet: 17, suhuRuang: 18, daya: "2100W", alert: false, catatan: "Wajib Menyala 24 Jam" }
+        ];
+
+        let currentFilter = 'ALL';
+
+        // Update Jam Real-time
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID') + ' WIB';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Filter Gedung
+        function filterGedung(gedung) {
+            currentFilter = gedung;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-100', 'text-slate-600');
+            });
+            event.target.classList.remove('bg-slate-100', 'text-slate-600');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            renderCards();
+        }
+
+        // Toggle ON/OFF AC
+        function toggleAC(id) {
+            const ac = dataAC.find(item => item.id === id);
+            if (ac) {
+                ac.status = !ac.status;
+                ac.daya = ac.status ? "1100W" : "0W";
+                ac.suhuRuang = ac.status ? ac.suhuSet + 1 : 28;
+                renderCards();
+            }
+        }
+
+        // Ubah Suhu
+        function ubahSuhu(id, delta) {
+            const ac = dataAC.find(item => item.id === id);
+            if (ac && ac.status) {
+                const newSuhu = ac.suhuSet + delta;
+                if (newSuhu >= 16 && newSuhu <= 30) {
+                    ac.suhuSet = newSuhu;
+                    ac.suhuRuang = newSuhu;
+                    renderCards();
+                }
+            }
+        }
+
+        // Matikan Semua AC
+        function matikanSemuaAC() {
+            if(confirm("Apakah Anda yakin ingin mematikan semua unit AC di kampus?")) {
+                dataAC.forEach(ac => {
+                    ac.status = false;
+                    ac.daya = "0W";
+                    ac.suhuRuang = 28;
+                });
+                renderCards();
+            }
+        }
+
+        // Render Tampilan Kartu & Ringkasan
+        function renderCards() {
+            const grid = document.getElementById('ac-grid');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            grid.innerHTML = '';
+
+            // Hitung Summary
+            document.getElementById('total-unit').innerText = dataAC.length;
+            document.getElementById('total-on').innerText = dataAC.filter(a => a.status).length;
+            document.getElementById('total-off').innerText = dataAC.filter(a => !a.status).length;
+            document.getElementById('total-alert').innerText = dataAC.filter(a => a.alert).length;
+
+            // Filter Data
+            const filteredData = dataAC.filter(ac => {
+                const matchGedung = currentFilter === 'ALL' || ac.gedung === currentFilter;
+                const matchSearch = ac.ruangan.toLowerCase().includes(searchQuery) || ac.gedung.toLowerCase().includes(searchQuery);
+                return matchGedung && matchSearch;
+            });
+
+            filteredData.forEach(ac => {
+                const statusBadge = ac.status 
+                    ? `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">MENYALA</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">MATI</span>`;
+
+                const alertBanner = ac.alert 
+                    ? `<div class="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> ${ac.catatan}
+                       </div>`
+                    : `<div class="mt-3 text-xs text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info"></i> Status: ${ac.catatan}
+                       </div>`;
+
+                const cardHTML = `
+                    <div class="bg-white rounded-xl shadow-sm border ${ac.alert ? 'border-amber-300' : 'border-slate-200'} p-5 transition hover:shadow-md">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-semibold uppercase tracking-wider text-blue-600">${ac.gedung}</span>
+                                <h3 class="font-bold text-slate-800 text-base mt-0.5">${ac.ruangan}</h3>
+                            </div>
+                            ${statusBadge}
+                        </div>
+
+                        <div class="my-5 flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div>
+                                <p class="text-xs text-slate-500">Target Suhu</p>
+                                <div class="flex items-baseline gap-1 mt-1">
+                                    <span class="text-3xl font-bold ${ac.status ? 'text-blue-600' : 'text-slate-400'}">${ac.suhuSet}°C</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="ubahSuhu(${ac.id}, -1)" ${!ac.status ? 'disabled' : ''} class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                <button onclick="ubahSuhu(${ac.id}, 1)" ${!ac.status ? 'disabled' : ''} class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between text-xs text-slate-600 border-t border-slate-100 pt-3">
+                            <span><i class="fa-solid fa-temperature-half text-slate-400 mr-1"></i> Suhu Ruang: <strong>${ac.suhuRuang}°C</strong></span>
+                            <span><i class="fa-solid fa-bolt text-amber-500 mr-1"></i> Daya: <strong>${ac.daya}</strong></span>
+                        </div>
+
+                        ${alertBanner}
+
+                        <button onclick="toggleAC(${ac.id})" class="mt-4 w-full py-2.5 rounded-lg font-medium text-sm transition flex items-center justify-center gap-2 ${ac.status ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200' : 'bg-blue-600 text-white hover:bg-blue-700'}">
+                            <i class="fa-solid fa-power-off"></i> ${ac.status ? 'Matikan AC' : 'Nyalakan AC'}
+                        </button>
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        // Inisialisasi tampilan awal
+        renderCards();
+    </script>
+</body>
+</html>
